@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huffman Lab — Alternative Encoder</title>
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;
+    font-family:Inter,Segoe UI,Arial,sans-serif;
+    background:radial-gradient(ellipse at top,#0754c7 0%,#073b9b 38%,#041b55 100%);
+    color:#e5e7eb;
+    min-height:100vh;
+}
+.wrapper{width:92%;max-width:1150px;margin:32px auto 50px}
+header{
+    position:relative;
+    overflow:hidden;
+    padding:48px 34px;
+    margin-bottom:26px;
+    border:1px solid rgba(255,255,255,.24);
+    border-radius:28px;
+    background:
+        radial-gradient(circle at 85% 15%, rgba(34,211,238,.30), transparent 25%),
+        radial-gradient(circle at 12% 90%, rgba(59,130,246,.45), transparent 30%),
+        linear-gradient(120deg,#0754c7 0%,#123ec2 48%,#312e81 100%);
+    box-shadow:0 20px 55px rgba(31,41,115,.42);
+}
+header::after{
+    content:"0101 1010 0011";
+    position:absolute;
+    right:24px;
+    bottom:18px;
+    color:rgba(255,255,255,.15);
+    font-family:Consolas,monospace;
+    font-size:clamp(18px,3vw,30px);
+    font-weight:800;
+    letter-spacing:5px;
+    transform:rotate(-8deg);
+    pointer-events:none;
+}
+.badge{
+    display:inline-block;
+    padding:8px 13px;
+    border-radius:999px;
+    background:rgba(255,255,255,.17);
+    border:1px solid rgba(255,255,255,.3);
+    color:#fff7c2;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.2px;
+    text-transform:uppercase;
+    backdrop-filter:blur(8px);
+}
+h1{
+    position:relative;
+    z-index:1;
+    margin:18px 0 12px;
+    font-size:clamp(40px,6vw,66px);
+    line-height:1.05;
+    letter-spacing:-1.8px;
+    color:#ffffff;
+    text-shadow:0 5px 22px rgba(30,27,75,.3);
+}
+.subtitle{
+    position:relative;
+    z-index:1;
+    max-width:680px;
+    color:#eefaff;
+    margin:0;
+    font-size:clamp(16px,2vw,20px);
+    line-height:1.7;
+}
+.hero-accent{
+    color:#fde68a;
+}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.panel{
+    background:linear-gradient(145deg,rgba(7,75,173,.96),rgba(4,39,105,.98));color:#f8fbff;border:1px solid #168bff;border-radius:18px;padding:24px;
+    box-shadow:0 14px 40px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.panel.dark{background:#111827;color:#e5e7eb}
+h2{margin-top:0;font-size:21px}
+label{font-size:13px;font-weight:700;color:#c5ddff}
+textarea{
+    width:100%;min-height:135px;margin-top:9px;padding:15px;
+    border:2px solid #2b8bff;border-radius:13px;resize:vertical;
+    font-size:16px;outline:none;background:#06285f;color:#f8fbff;
+}
+textarea:focus{border-color:#6366f1}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:13px}
+button{
+    border:0;border-radius:11px;padding:11px 17px;font-weight:700;
+    cursor:pointer;font-size:14px;background:#4f46e5;color:white;
+}
+button:hover{filter:brightness(1.08)}
+button.secondary{background:#0f766e}
+button.ghost{background:#e2e8f0;color:#334155}
+.output{
+    margin-top:18px;padding:16px;border-radius:14px;background:#eef2ff;
+    border:1px solid #c7d2fe;color:#312e81;
+}
+.bits{
+    margin-top:9px;padding:14px;background:#0f172a;color:#a7f3d0;
+    border-radius:10px;font-family:Consolas,monospace;line-height:1.7;
+    word-break:break-all;max-height:170px;overflow:auto;
+}
+.result{
+    margin-top:14px;padding:14px;border-radius:12px;
+    background:#ecfdf5;border-left:5px solid #10b981;color:#065f46;
+}
+.stats{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px;
+}
+.stat{padding:13px;border-radius:12px;background:#1e293b;border:1px solid #334155}
+.stat small{display:block;color:#94a3b8}.stat strong{font-size:21px}
+.full{grid-column:1/-1}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.tab{
+    background:#0646a7;color:#eaf4ff;border:1px solid #268dff;
+    padding:8px 12px;border-radius:9px;cursor:pointer;font-size:13px;
+}
+.tab.active{background:#4f46e5;color:white;border-color:#4f46e5}
+.content{display:none}.content.active{display:block}
+table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:10px}
+th,td{padding:10px;text-align:center;border-bottom:1px solid #334155}
+th{background:#063783;color:#dbeafe}
+td{color:#f0f7ff}
+.code{
+    display:inline-block;padding:5px 9px;border-radius:7px;
+    background:#0759c7;color:#eaf4ff;font-family:Consolas,monospace;
+}
+.tree{
+    background:
+      radial-gradient(circle at 15% 10%,rgba(99,102,241,.14),transparent 30%),
+      radial-gradient(circle at 85% 85%,rgba(20,184,166,.12),transparent 32%),
+      #080f20;
+    border:1px solid #168bff;
+    border-radius:16px;
+    padding:18px 12px;
+    overflow:auto;
+    color:#e2e8f0;
+    min-height:220px;
+}
+.tree svg{
+    display:block;
+    width:100%;
+    height:auto;
+    min-width:620px;
+    margin:0 auto;
+}
+.tree-legend{
+    display:flex;gap:14px;flex-wrap:wrap;align-items:center;
+    margin:0 0 14px;color:#e0efff;font-size:12px;
+}
+.legend-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
+.tree-empty{padding:45px 15px;text-align:center;color:#94a3b8}
+.tree-caption{font-size:12px;color:#c7e2ff;margin-top:10px;text-align:center}
+
+.note{font-size:12px;color:#c5ddff;margin-top:9px}
+.empty{color:#94a3b8;text-align:center;padding:20px}
+@media(max-width:800px){
+    .grid{grid-template-columns:1fr}.full{grid-column:auto}
+    .stats{grid-template-columns:1fr}
+    h1{font-size:27px}
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+<header>
+    <span class="badge">✦ Data Compression Project</span>
+    <h1>Huffman <span class="hero-accent">Studio</span></h1>
+    <p class="subtitle">Transform ordinary text into unique binary codes and discover the magic of Huffman Studio.</p>
+</header>
+
+<div class="grid">
+<section class="panel">
+    <h2>Sender</h2>
+    <label>MESSAGE</label>
+    <textarea id="message" placeholder="Type your message here..."></textarea>
+    <div class="actions">
+        <button onclick="encode()">Build & Encode</button>
+        <button class="ghost" onclick="clearAll()">Clear</button>
+    </div>
+
+    <div id="encodedBox" class="output" style="display:none">
+        <b>Encoded bit stream</b>
+        <div id="encoded" class="bits"></div>
+        <div class="actions">
+            <button class="secondary" onclick="copyBits()">Copy Bits</button>
+        </div>
+        <div class="note">Only the 0/1 stream is copied.</div>
+    </div>
+</section>
+
+<section class="panel dark">
+    <h2>Receiver</h2>
+    <label style="color:#94a3b8">ENCODED BITS</label>
+    <textarea id="binary" placeholder="Paste 0s and 1s here..." style="background:#0f172a;color:#e5e7eb;border-color:#334155"></textarea>
+    <div class="actions">
+        <button onclick="decode()">Decode</button>
+    </div>
+    <div id="decoded" class="result" style="display:none"></div>
+
+    <div id="stats" class="stats" style="display:none">
+        <div class="stat"><small>Characters</small><strong id="chars">0</strong></div>
+        <div class="stat"><small>Original bits</small><strong id="original">0</strong></div>
+        <div class="stat"><small>Compressed bits</small><strong id="compressed">0</strong></div>
+    </div>
+</section>
+
+<section class="panel dark full">
+    <h2>How the encoding was created</h2>
+    <div class="tabs">
+        <button class="tab active" onclick="showTab('freq',this)">Frequency</button>
+        <button class="tab" onclick="showTab('codes',this)">Huffman Codes</button>
+        <button class="tab" onclick="showTab('treeTab',this)">Tree</button>
+        <button class="tab" onclick="showTab('analysis',this)">Analysis</button>
+    </div>
+
+    <div id="freq" class="content active"><div id="frequency" class="empty">Encode a message first.</div></div>
+    <div id="codes" class="content"><div id="codeTable" class="empty">Encode a message first.</div></div>
+    <div id="treeTab" class="content"><div id="tree" class="tree">Encode a message first.</div></div>
+    <div id="analysis" class="content"><div id="bitAnalysis" class="empty">Encode a message first.</div></div>
+</section>
+</div>
+</div>
+
+<script>
+let currentCodes = {};
+let root = null;
+let encodedBits = "";
+
+class Node{
+    constructor(char,freq,left=null,right=null,order=0){
+        this.char=char; this.freq=freq; this.left=left; this.right=right; this.order=order;
+    }
+}
+
+function frequencyOf(text){
+    const f={};
+    for(const ch of text) f[ch]=(f[ch]||0)+1;
+    return f;
+}
+
+/*
+  Alternative construction:
+  1) Frequency is sorted by frequency.
+  2) On equal frequency, character order is reversed.
+  3) RIGHT branch gets 0 and LEFT branch gets 1.
+  These choices intentionally produce a different valid Huffman code
+  from the common left=0/right=1 implementation.
+*/
+function buildTree(freq){
+    let nodes=Object.keys(freq).map((ch,i)=>new Node(ch,freq[ch],null,null,i));
+    if(nodes.length===1) return new Node(null,nodes[0].freq,nodes[0],null,-1);
+
+    while(nodes.length>1){
+        nodes.sort((a,b)=>{
+            if(a.freq!==b.freq) return a.freq-b.freq;
+            return String(b.char??"").localeCompare(String(a.char??""));
+        });
+        const a=nodes.shift(), b=nodes.shift();
+        nodes.push(new Node(null,a.freq+b.freq,a,b,-1));
+    }
+    return nodes[0];
+}
+
+function makeCodes(node,code="",codes={}){
+    if(!node) return codes;
+    if(node.char!==null){
+        codes[node.char]=code||"0";
+        return codes;
+    }
+    // Match the visual tree: left = 0, right = 1
+    makeCodes(node.left,code+"0",codes);
+    makeCodes(node.right,code+"1",codes);
+    return codes;
+}
+
+function encode(){
+    const msg=document.getElementById("message").value;
+    if(!msg){alert("Please enter a message.");return;}
+
+    const freq=frequencyOf(msg);
+    root=buildTree(freq);
+    currentCodes=makeCodes(root);
+
+    encodedBits="";
+    for(const ch of msg) encodedBits+=currentCodes[ch];
+
+    document.getElementById("encoded").textContent=encodedBits;
+    document.getElementById("encodedBox").style.display="block";
+    document.getElementById("binary").value="";
+    document.getElementById("decoded").style.display="none";
+
+    renderFrequency(freq);
+    renderCodes(freq);
+    renderTree();
+    renderAnalysis(msg,encodedBits);
+
+    document.getElementById("chars").textContent=msg.length;
+    document.getElementById("original").textContent=msg.length*8;
+    document.getElementById("compressed").textContent=encodedBits.length;
+    document.getElementById("stats").style.display="grid";
+}
+
+function decode(){
+    const input=document.getElementById("binary").value.trim();
+    if(!input){alert("Paste an encoded bit stream.");return;}
+    if(!/^[01]+$/.test(input)){alert("Only 0 and 1 are allowed.");return;}
+    if(!root){alert("Build the Huffman tree from the Sender first.");return;}
+
+    if(root.char!==null){
+        document.getElementById("decoded").textContent="Decoded message: "+root.char.repeat(input.length);
+        document.getElementById("decoded").style.display="block";
+        return;
+    }
+
+    let node=root, result="";
+    for(const bit of input){
+        node=(bit==="0")?node.left:node.right;
+        if(!node){alert("Invalid bit stream for the current Huffman tree.");return;}
+        if(node.char!==null){result+=node.char;node=root;}
+    }
+    if(node!==root){alert("Incomplete encoded message.");return;}
+
+    document.getElementById("decoded").innerHTML="<b>Decoded message:</b><br>"+escapeHTML(result);
+    document.getElementById("decoded").style.display="block";
+}
+
+function copyBits(){
+    if(!encodedBits){return;}
+    navigator.clipboard.writeText(encodedBits).then(
+        ()=>alert("Encoded bits copied!"),
+        ()=>alert("Copy failed. Select and copy the bits manually.")
+    );
+}
+
+function renderFrequency(freq){
+    let h="<table><tr><th>Character</th><th>Frequency</th></tr>";
+    for(const ch of Object.keys(freq)){
+        h+="<tr><td>"+escapeHTML(displayChar(ch))+"</td><td>"+freq[ch]+"</td></tr>";
+    }
+    document.getElementById("frequency").innerHTML=h+"</table>";
+}
+
+function renderCodes(freq){
+    let h="<table><tr><th>Character</th><th>Frequency</th><th>Huffman Code</th></tr>";
+    for(const ch of Object.keys(freq)){
+        h+="<tr><td>"+escapeHTML(displayChar(ch))+"</td><td>"+freq[ch]+"</td><td><span class='code'>"+currentCodes[ch]+"</span></td></tr>";
+    }
+    document.getElementById("codeTable").innerHTML=h+"</table>";
+}
+
+function renderTree(){
+    const host = document.getElementById("tree");
+    if(!root){
+        host.innerHTML = '<div class="tree-empty">Encode a message to visualize its Huffman tree.</div>';
+        return;
+    }
+    let leafIndex=0;
+    const levelGap=96, leafGap=82, radius=29, top=38;
+    const palette=[['#ffd5dc','#ff1744'],['#c9f7d9','#16a34a'],['#ffe6b8','#f59e0b'],['#cde5ff','#2878e8'],['#f4d5ff','#c026d3'],['#d7f4f2','#0d9488']];
+    function measure(n,d=0){
+        n._depth=d;
+        if(!n.left&&!n.right){n._x=radius+12+leafIndex*leafGap; n._leafIndex=leafIndex++;}
+        else { if(n.left)measure(n.left,d+1); if(n.right)measure(n.right,d+1); n._x=(n.left._x+n.right._x)/2; }
+    }
+    measure(root);
+    let maxDepth=0; (function depth(n){if(!n)return;maxDepth=Math.max(maxDepth,n._depth);depth(n.left);depth(n.right)})(root);
+    const width=Math.max(210,leafIndex*leafGap+24), height=top*2+maxDepth*levelGap+radius*2+10, parts=[];
+    function drawEdges(n){
+        if(!n)return;
+        const x1=n._x,y1=top+n._depth*levelGap+radius-2;
+        for(const child of [n.left,n.right]){
+            if(!child)continue;
+            const x2=child._x,y2=top+child._depth*levelGap-radius+2;
+            parts.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#e0f2fe" stroke-width="3" stroke-linecap="round"/>`);
+            const bit=child===n.left?'0':'1', lx=(x1+x2)/2, ly=(y1+y2)/2;
+            parts.push(`<rect x="${lx-10}" y="${ly-10}" width="20" height="20" rx="5" fill="#063783" stroke="#7dd3fc" stroke-width="1.2" opacity=".98"/><text x="${lx}" y="${ly+5}" text-anchor="middle" font-size="15" font-weight="700" fill="#ffffff">${bit}</text>`);
+        }
+        drawEdges(n.left);drawEdges(n.right);
+    }
+    function drawNodes(n){
+        if(!n)return;
+        const x=n._x,y=top+n._depth*levelGap,isLeaf=!n.left&&!n.right;
+        if(isLeaf){
+            const [fill,stroke]=palette[n._leafIndex%palette.length];
+            const ch=displayChar(n.char), labelSize=ch.length>5?10:(ch==='(space)'?12:18);
+            parts.push(`<circle cx="${x}" cy="${y}" r="${radius}" fill="${fill}" stroke="${stroke}" stroke-width="1.2"/>`);
+            parts.push(`<text x="${x}" y="${y-1}" text-anchor="middle" font-size="${labelSize}" fill="#0f172a">${escapeHTML(ch)}</text>`);
+            parts.push(`<text x="${x}" y="${y+18}" text-anchor="middle" font-size="13" fill="#0f172a">${n.freq}</text>`);
+        }else{
+            parts.push(`<circle cx="${x}" cy="${y}" r="${radius}" fill="#e4d9ff" stroke="#5421df" stroke-width="1.3"/>`);
+            parts.push(`<text x="${x}" y="${y+6}" text-anchor="middle" font-size="18" fill="#111827">${n.freq}</text>`);
+        }
+        drawNodes(n.left);drawNodes(n.right);
+    }
+    drawEdges(root);drawNodes(root);
+    host.innerHTML=`<div style="overflow-x:auto;width:100%"><svg viewBox="0 0 ${width} ${height}" style="display:block;min-width:${Math.min(width,300)}px;width:${width}px;max-width:none;height:auto" role="img" aria-label="Huffman tree with frequency circles and binary branch labels" xmlns="http://www.w3.org/2000/svg">${parts.join('')}</svg></div>`+
+    '<div class="tree-legend"><span><i class="legend-dot" style="background:#c4b5fd;border:1px solid #5421df"></i>Internal node (frequency)</span><span><i class="legend-dot" style="background:#ffd5dc;border:1px solid #ff1744"></i>Leaf node (character and frequency)</span><span>Left branch = 0 · Right branch = 1</span></div>'+
+    '<div class="tree-caption">Follow the branch bits from the root to a leaf to get that character’s Huffman code.</div>';
+}
+
+function renderAnalysis(msg,bits){
+    const original=msg.length*8;
+    const saved=original-bits.length;
+    const percent=original?((saved/original)*100):0;
+    document.getElementById("bitAnalysis").innerHTML=
+        "<div style='line-height:2'>"+
+        "<b>Original representation:</b> "+msg.length+" × 8 = "+original+" bits<br>"+
+        "<b>Huffman representation:</b> "+bits.length+" bits<br>"+
+        "<b>Bits saved:</b> "+saved+" bits<br>"+
+        "<b>Compression saving:</b> "+percent.toFixed(2)+"%<br><br>"+
+        "<b>Why are the codes different?</b><br>"+
+        "This version uses a different equal-frequency tie-break and assigns "+
+        "<b>0 to the left branch</b> and <b>1 to the right branch</b>. "+
+        "It is still a valid prefix-free Huffman code."
+        +"</div>";
+}
+
+function showTab(id,btn){
+    document.querySelectorAll(".content").forEach(x=>x.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    document.getElementById(id).classList.add("active");
+    btn.classList.add("active");
+}
+
+function clearAll(){
+    document.getElementById("message").value="";
+    document.getElementById("binary").value="";
+    document.getElementById("encodedBox").style.display="none";
+    document.getElementById("decoded").style.display="none";
+    document.getElementById("stats").style.display="none";
+    document.getElementById("frequency").innerHTML='<div class="empty">Encode a message first.</div>';
+    document.getElementById("codeTable").innerHTML='<div class="empty">Encode a message first.</div>';
+    document.getElementById("tree").innerHTML='<div class="tree-empty">Encode a message to visualize its Huffman tree.</div>';
+    document.getElementById("bitAnalysis").innerHTML='<div class="empty">Encode a message first.</div>';
+    currentCodes={};root=null;encodedBits="";
+}
+
+function displayChar(ch){
+    if(ch===" ")return "SPACE";
+    if(ch==="\\n")return "NEW LINE";
+    if(ch==="\\t")return "TAB";
+    return ch;
+}
+function escapeHTML(text){
+    return String(text).replace(/&/g,"&amp;").replace(/</g,"&lt;")
+        .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+</script>
+</body>
+</html>
